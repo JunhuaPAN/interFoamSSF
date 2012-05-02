@@ -1,4 +1,5 @@
-    Info<< "Reading field p_rgh\n" << endl;
+
+    /*Info<< "Reading field p_rgh\n" << endl;
     volScalarField p_rgh
     (
         IOobject
@@ -10,8 +11,23 @@
             IOobject::AUTO_WRITE
         ),
         mesh
+    );*/
+
+	Info<< "Reading field p\n" << endl;
+    volScalarField p
+    (
+        IOobject
+        (
+            "p",
+            runTime.timeName(),
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh
     );
 
+// volume fraction (alpha1 = 0: air, alpha1 = 1: steel)
     Info<< "Reading field alpha1\n" << endl;
     volScalarField alpha1
     (
@@ -26,6 +42,7 @@
         mesh
     );
 
+// velocity
     Info<< "Reading field U\n" << endl;
     volVectorField U
     (
@@ -40,17 +57,14 @@
         mesh
     );
 
-    #include "createPhi.H"
+#   include "createPhi.H"
+	surfaceScalarField phi_old = phi;
 
+//transport properties -> Cp, kT, ...
+#   include "readTransportProperties.H"
 
-    Info<< "Reading transportProperties\n" << endl;
-    twoPhaseMixture twoPhaseProperties(U, phi);
-
-    const dimensionedScalar& rho1 = twoPhaseProperties.rho1();
-    const dimensionedScalar& rho2 = twoPhaseProperties.rho2();
-
-
-    // Need to store rho for ddt(rho, U)
+    // Need to store rho for ddt(rho, U) and ddt(rho,T)
+    // density
     volScalarField rho
     (
         IOobject
@@ -61,7 +75,7 @@
             IOobject::READ_IF_PRESENT
         ),
         alpha1*rho1 + (scalar(1) - alpha1)*rho2,
-        alpha1.boundaryField().types()
+        alpha1.boundaryField().types() //zeroGradient
     );
     rho.oldTime();
 
@@ -86,30 +100,13 @@
     // Construct interface from alpha1 distribution
     interfaceProperties interface(alpha1, U, twoPhaseProperties);
 
+	#include "readGravitationalAcceleration.H"
 
-    // Construct incompressible turbulence model
-    autoPtr<incompressible::turbulenceModel> turbulence
-    (
-        incompressible::turbulenceModel::New(U, phi, twoPhaseProperties)
-    );
-
-    #include "readGravitationalAcceleration.H"
-
-    /*
-    dimensionedVector g0(g);
-
-    // Read the data file and initialise the interpolation table
-    interpolationTable<vector> timeSeriesAcceleration
-    (
-        runTime.path()/runTime.caseConstant()/"acceleration.dat"
-    );
-    */
-
-    Info<< "Calculating field g.h\n" << endl;
+	Info<< "Calculating field g.h\n" << endl;
     volScalarField gh("gh", g & mesh.C());
     surfaceScalarField ghf("ghf", g & mesh.Cf());
 
-    volScalarField p
+    /*volScalarField p
     (
         IOobject
         (
@@ -120,6 +117,19 @@
             IOobject::AUTO_WRITE
         ),
         p_rgh + rho*gh
+    );*/
+	
+	volScalarField pc
+    (
+        IOobject
+        (
+            "pc",
+            runTime.timeName(),
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh
     );
 
     label pRefCell = 0;
@@ -127,13 +137,13 @@
     setRefCell
     (
         p,
-        p_rgh,
+        //p_rgh,
         mesh.solutionDict().subDict("PIMPLE"),
         pRefCell,
         pRefValue
     );
 
-    if (p_rgh.needReference())
+    /*if (p_rgh.needReference())
     {
         p += dimensionedScalar
         (
@@ -142,4 +152,6 @@
             pRefValue - getRefCellValue(p, pRefCell)
         );
         p_rgh = p - rho*gh;
-    }
+    }*/
+
+

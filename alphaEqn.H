@@ -6,6 +6,8 @@
     phic = min(interface.cAlpha()*phic, max(phic));
     surfaceScalarField phir(phic*interface.nHatf());
 
+    scalar nAlphaCorr = 1;
+
     for (int aCorr=0; aCorr<nAlphaCorr; aCorr++)
     {
         surfaceScalarField phiAlpha

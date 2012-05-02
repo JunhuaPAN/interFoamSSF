@@ -10,31 +10,42 @@
       + fvc::ddtPhiCorr(rAU, rho, U, phi)
     );
 
-    adjustPhi(phiU, U, p_rgh);
+    adjustPhi(phiU, U, p);
 
     phi = phiU +
     (
-        fvc::interpolate(interface.sigmaK())*fvc::snGrad(alpha1)
-      - ghf*fvc::snGrad(rho)
-    )*rAUf*mesh.magSf();
+        
+        //(
+            //fvc::interpolate(interface.sigmaK())*fvc::snGrad(alpha1)*factor1 // normal
+            //- ghf*fvc::snGrad(rho)
+        //)*mesh.magSf()
+	    fvc::interpolate(rho)*(g & mesh.Sf())
+      + (fvc::interpolate(fc) & mesh.Sf())
+      - fvc::snGrad(pc) * mesh.magSf()
+
+    )*rAUf;
+
+    //relax
+    phi = 0.7 * phi_old + 0.3 * phi;
+	phi_old = phi;
 
     for (int nonOrth=0; nonOrth<=pimple.nNonOrthCorr(); nonOrth++)
     {
-        fvScalarMatrix p_rghEqn
+        fvScalarMatrix pEqn
         (
-            fvm::laplacian(rAUf, p_rgh) == fvc::div(phi)
+            fvm::laplacian(rAUf, p) == fvc::div(phi)
         );
 
-        p_rghEqn.setReference(pRefCell, getRefCellValue(p_rgh, pRefCell));
+        pEqn.setReference(pRefCell, getRefCellValue(p, pRefCell));
 
-        p_rghEqn.solve
+        pEqn.solve
         (
-            mesh.solver(p_rgh.select(pimple.finalInnerIter(corr, nonOrth)))
+            mesh.solver(p.select(pimple.finalInnerIter(corr, nonOrth)))
         );
 
         if (nonOrth == pimple.nNonOrthCorr())
         {
-            phi -= p_rghEqn.flux();
+            phi -= pEqn.flux();
         }
     }
 
@@ -43,7 +54,7 @@
 
     #include "continuityErrs.H"
 
-    p == p_rgh + rho*gh;
+    /*p == p_rgh + rho*gh;
 
     if (p_rgh.needReference())
     {
@@ -54,5 +65,5 @@
             pRefValue - getRefCellValue(p, pRefCell)
         );
         p_rgh = p - rho*gh;
-    }
+    }*/
 }
