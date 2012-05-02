@@ -27,7 +27,7 @@
         mesh
     );
 
-// volume fraction (alpha1 = 0: air, alpha1 = 1: steel)
+// volume fraction (alpha1 = 0: air, alpha1 = 1: liquid)
     Info<< "Reading field alpha1\n" << endl;
     volScalarField alpha1
     (
@@ -60,8 +60,11 @@
 #   include "createPhi.H"
 	surfaceScalarField phi_old = phi;
 
-//transport properties -> Cp, kT, ...
-#   include "readTransportProperties.H"
+	Info<< "Reading transportProperties\n" << endl;
+    twoPhaseMixture twoPhaseProperties(U, phi);
+
+    const dimensionedScalar& rho1 = twoPhaseProperties.rho1();
+    const dimensionedScalar& rho2 = twoPhaseProperties.rho2();
 
     // Need to store rho for ddt(rho, U) and ddt(rho,T)
     // density
@@ -106,19 +109,6 @@
     volScalarField gh("gh", g & mesh.C());
     surfaceScalarField ghf("ghf", g & mesh.Cf());
 
-    /*volScalarField p
-    (
-        IOobject
-        (
-            "p",
-            runTime.timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
-        ),
-        p_rgh + rho*gh
-    );*/
-	
 	volScalarField pc
     (
         IOobject

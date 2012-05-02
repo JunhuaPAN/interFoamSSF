@@ -25,16 +25,6 @@
 				  - fvc::snGrad(pc)
                 ) * mesh.magSf()
             )
-            /*fvc::reconstruct
-            (
-                //fvc::interpolate(rho*(scalar(1) - beta*(T-Tref1) ))*(g & mesh.Sf()) +
-               (
-                  fvc::interpolate(interface.sigmaK())*fvc::snGrad(alpha1) * factor1 //normal 
-                  - ghf*fvc::snGrad(rho)
-                  - fvc::snGrad(p_rgh)
-                ) * mesh.magSf()
-              + (fvc::interpolate(Fst) & mesh.Sf())
-            )*pos(T-Ts1)*/
         );
     }
 

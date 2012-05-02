@@ -14,11 +14,6 @@
 
     phi = phiU +
     (
-        
-        //(
-            //fvc::interpolate(interface.sigmaK())*fvc::snGrad(alpha1)*factor1 // normal
-            //- ghf*fvc::snGrad(rho)
-        //)*mesh.magSf()
 	    fvc::interpolate(rho)*(g & mesh.Sf())
       + (fvc::interpolate(fc) & mesh.Sf())
       - fvc::snGrad(pc) * mesh.magSf()
