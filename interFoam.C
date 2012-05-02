@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011 Anton Kidess
+    \\  /    A nd           | Copyright (C) 2012 Anton Kidess
      \\/     M anipulation  | A.Kidess@tudelft.nl
 -------------------------------------------------------------------------------
 License
