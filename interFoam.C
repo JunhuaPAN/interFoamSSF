@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011 OpenFOAM Foundation
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2011 Anton Kidess
+     \\/     M anipulation  | A.Kidess@tudelft.nl
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,6 +30,10 @@ Description
 
     The momentum and other fluid properties are of the "mixture" and a single
     momentum equation is solved.
+
+    interFoam is extended with the SSF formulation to reduce spurious currents.
+    See Raeini, Blunt, Bijeljic 2012
+    http://dx.doi.org/10.1016/j.jcp.2012.04.011
 
 \*---------------------------------------------------------------------------*/
 
