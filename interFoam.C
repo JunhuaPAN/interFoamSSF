@@ -91,47 +91,47 @@ int main(int argc, char *argv[])
         // --- Pressure-velocity PIMPLE corrector loop
         for (pimple.start(); pimple.loop() || cycle<3; pimple++)
         {
+            surfaceScalarField rhoPhiSum(0.0*rhoPhi);
 			if (++cycle == 1)
             {
                 Info << "Subcycle 1" << endl;
-
-                Info << "Time, step: " << runTime.time().value() << ", " << runTime.deltaTValue() << endl;
+                //Info << "Time, step: " << runTime.time().value() << ", " << runTime.deltaTValue() << endl;
                 runTime.setDeltaT(timestep/2.0);
-
-                Info << "Time, step: " << runTime.time().value() << ", " << runTime.deltaTValue() << endl;
+                //Info << "Time, step: " << runTime.time().value() << ", " << runTime.deltaTValue() << endl;
                 runTime.setTime(time - timestep/2.0, tindex);
 
-                Info << "Time, step: " << runTime.time().value() << ", " << runTime.deltaTValue() << endl;
+                //Info << "Time, step: " << runTime.time().value() << ", " << runTime.deltaTValue() << endl;
                 #include "alphaEqn.H"
+                rhoPhiSum += (0.5 * rhoPhi);
                 continue;
             } else {
                 Info << "Subcycle 2" << endl;
 
-                Info << "Time, step: " << runTime.time().value() << ", " << runTime.deltaTValue() << endl;
+                //Info << "Time, step: " << runTime.time().value() << ", " << runTime.deltaTValue() << endl;
                 runTime.setDeltaT(timestep/2.0);
                 runTime.setTime(time, tindex);
 
-                Info << "Time, step: " << runTime.time().value() << ", " << runTime.deltaTValue() << endl;
+                //Info << "Time, step: " << runTime.time().value() << ", " << runTime.deltaTValue() << endl;
                 #include "alphaEqn.H"
                 //need to accumulate rhoPhi
+                rhoPhi = 0.5 * rhoPhi + 0.5 * rhoPhiSum;
             }
             //Qwestshin - do we have to restore timeIndex too?
             //reset timestep and time
-			Info << "Time, step: " << runTime.time().value() << ", " << runTime.deltaTValue() << endl;
+			//Info << "Time, step: " << runTime.time().value() << ", " << runTime.deltaTValue() << endl;
             runTime.setTime(time, tindex);
             runTime.setDeltaT(timestep);
 
-            Info << "Time, step: " << runTime.time().value() << ", " << runTime.deltaTValue() << endl;
+            //Info << "Time, step: " << runTime.time().value() << ", " << runTime.deltaTValue() << endl;
 
 			//surfaceScalarField fcf_old = interface.sigma()*fvc::snGrad(alpha1)*interface.Kf();
 			surfaceScalarField fcf_old = interface.sigma()*fvc::snGrad(alpha1)*fvc::interpolate(interface.K());
 
             //update properties
-            rho == alpha1*rho1 + (scalar(1) - alpha1)*rho2;
-            //mu = alpha1*mu1 + (scalar(1) - alpha1)*mu2;
-
             interface.correct();
-
+            twoPhaseProperties.correct();
+            rho == alpha1*rho1 + (scalar(1) - alpha1)*rho2;
+            
             //surface force
             scalar Cpc = 0.5;
             volScalarField alpha_pc = 1.0/(1.0-Cpc) * (min( max(alpha1,Cpc/2.0), (1.0-Cpc/2.0) ) - Cpc/2.0);
