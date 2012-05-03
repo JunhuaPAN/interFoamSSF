@@ -88,11 +88,14 @@ int main(int argc, char *argv[])
         double timestep(runTime.deltaTValue());
         label tindex(runTime.timeIndex());
 
+	    //surfaceScalarField fcf_old = interface.sigma()*fvc::snGrad(alpha1)*interface.Kf();
+		surfaceScalarField fcf_old = interface.sigma()*fvc::snGrad(alpha1)*fvc::interpolate(interface.K());
+
         // --- Pressure-velocity PIMPLE corrector loop
         for (pimple.start(); pimple.loop() || cycle<3; pimple++)
         {
             surfaceScalarField rhoPhiSum(0.0*rhoPhi);
-			if (++cycle == 1)
+			if (++cycle == 1) //should move this outside of the PIMPLE loop
             {
                 Info << "Subcycle 1" << endl;
                 //Info << "Time, step: " << runTime.time().value() << ", " << runTime.deltaTValue() << endl;
@@ -124,8 +127,6 @@ int main(int argc, char *argv[])
 
             //Info << "Time, step: " << runTime.time().value() << ", " << runTime.deltaTValue() << endl;
 
-			//surfaceScalarField fcf_old = interface.sigma()*fvc::snGrad(alpha1)*interface.Kf();
-			surfaceScalarField fcf_old = interface.sigma()*fvc::snGrad(alpha1)*fvc::interpolate(interface.K());
 
             //update properties
             interface.correct();
@@ -140,10 +141,12 @@ int main(int argc, char *argv[])
             //surfaceScalarField fcf = interface.sigma()*interface.Kf()*deltasf;
             surfaceScalarField fcf = interface.sigma()*fvc::interpolate(interface.K())*deltasf;
             volVectorField fc = fvc::average(fcf*mesh.Sf()/mesh.magSf());
-            fcf_old = fcf;
             
             // relax capillary force
-            if (!pimple.finalIter()) fcf = 0.7 * fcf_old + 0.3 * fcf;
+            if (!pimple.finalIter()) {
+                fcf = 0.7 * fcf_old + 0.3 * fcf;
+                fcf_old = fcf;
+            }
 
             // solve capillary pressure
             fvScalarMatrix pcEqn

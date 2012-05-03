@@ -21,8 +21,10 @@
     )*rAUf;
 
     //relax
-    phi = 0.7 * phi_old + 0.3 * phi;
-	phi_old = phi;
+    if (!pimple.finalIter()) {
+        phi = 0.7 * phi_old + 0.3 * phi;
+	    phi_old = phi;
+    }
 
     for (int nonOrth=0; nonOrth<=pimple.nNonOrthCorr(); nonOrth++)
     {
