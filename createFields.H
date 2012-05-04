@@ -58,7 +58,7 @@
     );
 
 #   include "createPhi.H"
-	surfaceScalarField phi_old = phi;
+
 
 	Info<< "Reading transportProperties\n" << endl;
     twoPhaseMixture twoPhaseProperties(U, phi);
@@ -102,6 +102,11 @@
 
     // Construct interface from alpha1 distribution
     interfaceProperties interface(alpha1, U, twoPhaseProperties);
+
+// old time fields for relaxation (could alternatively work with oldTime() )
+	surfaceScalarField phi_old = phi;
+    surfaceScalarField fcf_old = interface.sigma()*fvc::snGrad(alpha1)*fvc::interpolate(interface.K());
+
 
 	#include "readGravitationalAcceleration.H"
 
