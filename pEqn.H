@@ -23,6 +23,7 @@
     //relax
     if (!pimple.finalIter()) {
         phi = 0.7 * phi_old + 0.3 * phi;
+    } else {
 	    phi_old = phi;
     }
 

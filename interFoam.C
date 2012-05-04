@@ -88,8 +88,6 @@ int main(int argc, char *argv[])
         double timestep(runTime.deltaTValue());
         label tindex(runTime.timeIndex());
 
-	    //surfaceScalarField fcf_old = interface.sigma()*fvc::snGrad(alpha1)*interface.Kf();
-		surfaceScalarField fcf_old = interface.sigma()*fvc::snGrad(alpha1)*fvc::interpolate(interface.K());
 
         // --- Pressure-velocity PIMPLE corrector loop
         for (pimple.start(); pimple.loop() || cycle<3; pimple++)
@@ -98,55 +96,48 @@ int main(int argc, char *argv[])
 			if (++cycle == 1) //should move this outside of the PIMPLE loop
             {
                 Info << "Subcycle 1" << endl;
-                //Info << "Time, step: " << runTime.time().value() << ", " << runTime.deltaTValue() << endl;
+
                 runTime.setDeltaT(timestep/2.0);
-                //Info << "Time, step: " << runTime.time().value() << ", " << runTime.deltaTValue() << endl;
                 runTime.setTime(time - timestep/2.0, tindex);
 
-                //Info << "Time, step: " << runTime.time().value() << ", " << runTime.deltaTValue() << endl;
                 #include "alphaEqn.H"
                 rhoPhiSum += (0.5 * rhoPhi);
                 continue;
             } else {
                 Info << "Subcycle 2" << endl;
 
-                //Info << "Time, step: " << runTime.time().value() << ", " << runTime.deltaTValue() << endl;
                 runTime.setDeltaT(timestep/2.0);
                 runTime.setTime(time, tindex);
 
-                //Info << "Time, step: " << runTime.time().value() << ", " << runTime.deltaTValue() << endl;
                 #include "alphaEqn.H"
                 //need to accumulate rhoPhi
                 rhoPhi = 0.5 * rhoPhi + 0.5 * rhoPhiSum;
             }
-            //Qwestshin - do we have to restore timeIndex too?
+            //rhoPhi = fvc::interpolate(rho) * phi;
             //reset timestep and time
-			//Info << "Time, step: " << runTime.time().value() << ", " << runTime.deltaTValue() << endl;
+            //Qwestshin - do we have to restore timeIndex too?
             runTime.setTime(time, tindex);
             runTime.setDeltaT(timestep);
 
-            //Info << "Time, step: " << runTime.time().value() << ", " << runTime.deltaTValue() << endl;
-
-
             //update properties
-            interface.correct();
             twoPhaseProperties.correct();
             rho == alpha1*rho1 + (scalar(1) - alpha1)*rho2;
+            interface.correct();
             
             //surface force
-            scalar Cpc = 0.5;
+            scalar Cpc = 0.98;
             volScalarField alpha_pc = 1.0/(1.0-Cpc) * (min( max(alpha1,Cpc/2.0), (1.0-Cpc/2.0) ) - Cpc/2.0);
             surfaceScalarField deltasf = fvc::snGrad(alpha_pc);
             
-            //surfaceScalarField fcf = interface.sigma()*interface.Kf()*deltasf;
-            surfaceScalarField fcf = interface.sigma()*fvc::interpolate(interface.K())*deltasf;
-            volVectorField fc = fvc::average(fcf*mesh.Sf()/mesh.magSf());
-            
+            surfaceScalarField fcf = interface.sigma()*interface.Kf()*deltasf;
             // relax capillary force
             if (!pimple.finalIter()) {
                 fcf = 0.7 * fcf_old + 0.3 * fcf;
+            } else {
                 fcf_old = fcf;
             }
+
+            volVectorField fc = fvc::average(fcf*mesh.Sf()/mesh.magSf());
 
             // solve capillary pressure
             fvScalarMatrix pcEqn
