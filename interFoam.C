@@ -81,7 +81,6 @@ int main(int argc, char *argv[])
 
         rho == alpha1*rho1 + (scalar(1) - alpha1)*rho2;
 
-		//update interface location for t = t_n-1 + dt/2
         int cycle = 0;
         // --- Outer corrector loop
         scalar time = runTime.time().value();
@@ -95,6 +94,7 @@ int main(int argc, char *argv[])
             surfaceScalarField rhoPhiSum(0.0*rhoPhi);
 			if (++cycle == 1) //should move this outside of the PIMPLE loop
             {
+		        //update interface location for t = t_n-1 + dt/2
                 Info << "Subcycle 1" << endl;
 
                 runTime.setDeltaT(timestep/2.0);
@@ -104,6 +104,7 @@ int main(int argc, char *argv[])
                 rhoPhiSum += (0.5 * rhoPhi);
                 continue;
             } else {
+                //update interface location for t_n
                 Info << "Subcycle 2" << endl;
 
                 runTime.setDeltaT(timestep/2.0);
@@ -122,11 +123,18 @@ int main(int argc, char *argv[])
             //update properties
             twoPhaseProperties.correct();
             rho == alpha1*rho1 + (scalar(1) - alpha1)*rho2;
+            //update curvature
             interface.correct();
             
             //surface force
-            scalar Cpc = 0.98;
-            volScalarField alpha_pc = 1.0/(1.0-Cpc) * (min( max(alpha1,Cpc/2.0), (1.0-Cpc/2.0) ) - Cpc/2.0);
+            //Cpc should be 0.5 for dynamic problems, > 0.9 for static problems
+            scalar Cpc (readScalar
+                (
+                    alpha1.mesh().solutionDict().subDict("PIMPLE").lookup("Cpc")
+                )
+            );
+            volScalarField alpha_pc = 1.0/(1.0-Cpc) * 
+                (min( max(alpha1,Cpc/2.0), (1.0-Cpc/2.0) ) - Cpc/2.0);
             surfaceScalarField deltasf = fvc::snGrad(alpha_pc);
             
             surfaceScalarField fcf = interface.sigma()*interface.Kf()*deltasf;
@@ -137,8 +145,8 @@ int main(int argc, char *argv[])
                 fcf_old = fcf;
             }
 
-            volVectorField fc = fvc::average(fcf*mesh.Sf()/mesh.magSf());
-
+            fc = fvc::average(fcf*mesh.Sf()/mesh.magSf());
+            
             // solve capillary pressure
             fvScalarMatrix pcEqn
             (
