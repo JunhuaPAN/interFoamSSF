@@ -16,11 +16,12 @@
         (
             UEqn
          ==
-			fc +
+			//fc +
             fvc::reconstruct
             (
                 fvc::interpolate(rho)*(g & mesh.Sf())
               + (
+                  fcf
                   - fvc::snGrad(p)
 				  - fvc::snGrad(pc)
                 ) * mesh.magSf()

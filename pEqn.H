@@ -3,6 +3,11 @@
     surfaceScalarField rAUf(fvc::interpolate(rAU));
 
     U = rAU*UEqn.H();
+    //relax
+    if (!pimple.finalIter()) {
+        U = 0.7 * U.oldTime() + 0.3 * U;
+    }
+
     surfaceScalarField phiU
     (
         "phiU",
@@ -15,17 +20,17 @@
     phi = phiU +
     (
 	    fvc::interpolate(rho)*(g & mesh.Sf())
-      + (fvc::interpolate(fc) & mesh.Sf())
+      //+ (fvc::interpolate(fc) & mesh.Sf())
+      + fcf * mesh.magSf()
       - fvc::snGrad(pc) * mesh.magSf()
-
     )*rAUf;
 
     //relax
-    if (!pimple.finalIter()) {
+    /*if (!pimple.finalIter()) {
         phi = 0.7 * phi_old + 0.3 * phi;
     } else {
 	    phi_old = phi;
-    }
+    }*/
 
     for (int nonOrth=0; nonOrth<=pimple.nNonOrthCorr(); nonOrth++)
     {

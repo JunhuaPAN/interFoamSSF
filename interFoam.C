@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
 
             //update properties
             twoPhaseProperties.correct();
-            rho == alpha1*rho1 + (scalar(1) - alpha1)*rho2;
+            rho == alpha1*rho1 + (scalar(1.0) - alpha1)*rho2;
             //update curvature
             interface.correct();
             
@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
             volScalarField alpha_pc = 1.0/(1.0-Cpc) * 
                 (min( max(alpha1,Cpc/2.0), (1.0-Cpc/2.0) ) - Cpc/2.0);
             surfaceScalarField deltasf = fvc::snGrad(alpha_pc);
-            
+
             surfaceScalarField fcf = interface.sigma()*interface.Kf()*deltasf;
             // relax capillary force
             if (!pimple.finalIter()) {
@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
             // solve capillary pressure
             fvScalarMatrix pcEqn
             (
-                fvm::laplacian(pc) == fvc::div(fc)
+                fvm::laplacian(pc) == fvc::div(fcf*mesh.magSf())
             );
             pcEqn.setReference(pRefCell, getRefCellValue(p, pRefCell));
             pcEqn.solve();
@@ -161,10 +161,10 @@ int main(int argc, char *argv[])
             {
                 #include "pEqn.H"
             }
-			Info << "max(U): " << max(U) << endl;
 
         } // pimple loop
 
+		Info << "max(U): " << max(U) << endl;
         runTime.write();
 
         Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
