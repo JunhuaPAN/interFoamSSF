@@ -105,7 +105,7 @@
 
 // old time fields for relaxation (could alternatively work with oldTime() )
 	surfaceScalarField phi_old = phi;
-    surfaceScalarField fcf_old = interface.sigma()*fvc::snGrad(alpha1)*fvc::interpolate(interface.K());
+    surfaceScalarField fcf_old = interface.sigma()*fvc::snGrad(alpha1)*interface.Kf();
 
 
 	#include "readGravitationalAcceleration.H"
