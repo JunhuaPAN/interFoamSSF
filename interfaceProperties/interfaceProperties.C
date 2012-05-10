@@ -109,13 +109,14 @@ void Foam::interfaceProperties::correctContactAngle
 
 void Foam::interfaceProperties::calculateK()
 {
-/*    const fvMesh& mesh = alpha1_.mesh();
-    const surfaceVectorField& Sf = mesh.Sf();*/
 
     scalar CSK = 0.5;
-    volScalarField alpha1s_ = CSK * (fvc::average(fvc::interpolate(alpha1_))) + (1.0 - CSK) * alpha1_;
-    volScalarField alpha2s_ = CSK * fvc::average(fvc::interpolate(alpha1s_)) + (1.0 - CSK) * alpha1s_;
-    volScalarField alpha3s_ = CSK * fvc::average(fvc::interpolate(alpha2s_)) + (1.0 - CSK) * alpha2s_;
+    volScalarField alpha1s_ = 
+        CSK * (fvc::average(fvc::interpolate(alpha1_))) + (1.0 - CSK) * alpha1_;
+    volScalarField alpha2s_ = 
+        CSK * fvc::average(fvc::interpolate(alpha1s_)) + (1.0 - CSK) * alpha1s_;
+    volScalarField alpha3s_ = 
+        CSK * fvc::average(fvc::interpolate(alpha2s_)) + (1.0 - CSK) * alpha2s_;
 
     volVectorField gradAlpha = fvc::grad(alpha3s_);
     volVectorField ns(gradAlpha/(Foam::mag(gradAlpha) + deltaN_));
@@ -128,38 +129,21 @@ void Foam::interfaceProperties::calculateK()
     K_ = -fvc::div(ns);
 
     volScalarField w = Foam::sqrt(alpha1_*(1.0 - alpha1_) + 1e-6);
-    //volScalarField factor = 2.0*Foam::sqrt(alpha1_*(1.0 - alpha1_)+1e-6) * pos(alpha1_-1e-6) * pos(0.9999999-alpha1_);
+    //volScalarField factor = 2.0*Foam::sqrt(alpha1_*(1.0 - alpha1_)+1e-6) 
+    //  * pos(alpha1_-1e-6) * pos(0.9999999-alpha1_);
     volScalarField factor = 2.0 * Foam::sqrt(alpha1c_*(1.0 - alpha1c_));
     //volScalarField factor = 2.0 * w; // alternative to clipping alpha1 - use w
 
-    volScalarField Ks_star_ = fvc::average(fvc::interpolate(K_*w))/fvc::average(fvc::interpolate(w));
+    volScalarField Ks_star_ = 
+        fvc::average(fvc::interpolate(K_*w))/fvc::average(fvc::interpolate(w));
     volScalarField Ks1_ = factor * K_ + (1.0 - factor) * Ks_star_;
 
-    Ks_star_ = fvc::average(fvc::interpolate(Ks1_*w))/fvc::average(fvc::interpolate(w));
+    Ks_star_ = 
+        fvc::average(fvc::interpolate(Ks1_*w))/fvc::average(fvc::interpolate(w));
     volScalarField Ks2_ = factor * K_ + (1.0 - factor) * Ks_star_;
 
     Kf_ = fvc::interpolate(w*Ks2_)/fvc::interpolate(w);
 
-
-    // Cell gradient of alpha
-    /*const volVectorField gradAlpha(fvc::grad(alpha1_));
-    // Interpolated face-gradient of alpha
-    surfaceVectorField gradAlphaf(fvc::interpolate(gradAlpha));*/
-
-    /*gradAlphaf -=
-        (mesh.Sf()/mesh.magSf())
-       *(fvc::snGrad(alpha1_) - (mesh.Sf() & gradAlphaf)/mesh.magSf());*/
-
-    // Face unit interface normal
-/*    surfaceVectorField nHatfv(gradAlphaf/(mag(gradAlphaf) + deltaN_));
-    correctContactAngle(nHatfv.boundaryField(), gradAlphaf.boundaryField());
-
-    // Face unit interface normal flux
-    nHatf_ = nHatfv & Sf;
-
-    // Simple expression for curvature
-    K_ = -fvc::div(nHatf_);
-*/
     // Complex expression for curvature.
     // Correction is formally zero but numerically non-zero.
     /*
