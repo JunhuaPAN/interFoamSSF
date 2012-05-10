@@ -122,7 +122,7 @@ void Foam::interfaceProperties::calculateK()
     volVectorField ns(gradAlpha/(Foam::mag(gradAlpha) + deltaN_));
 
     //clip alpha1 to avoid sqrt(<0)
-    volScalarField alpha1c_ = Foam::max(1.0, Foam::min(alpha1_, 0.0));
+    volScalarField alpha1c_ = Foam::min(1.0, Foam::max(alpha1_, 0.0));
 
     // eq. 14 in the reference paper does not have the minus sign,
     // but that's inconsistent with interFoam's formulation
