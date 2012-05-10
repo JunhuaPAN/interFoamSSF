@@ -115,19 +115,24 @@ void Foam::interfaceProperties::calculateK()
     scalar CSK = 0.5;
     volScalarField alpha1s_ = CSK * (fvc::average(fvc::interpolate(alpha1_))) + (1.0 - CSK) * alpha1_;
     volScalarField alpha2s_ = CSK * fvc::average(fvc::interpolate(alpha1s_)) + (1.0 - CSK) * alpha1s_;
+    volScalarField alpha3s_ = CSK * fvc::average(fvc::interpolate(alpha2s_)) + (1.0 - CSK) * alpha2s_;
 
-    //Info << "Possible div by zero" << endl;
+    volVectorField gradAlpha = fvc::grad(alpha3s_);
+    volVectorField ns(gradAlpha/(Foam::mag(gradAlpha) + deltaN_));
 
-    volVectorField gradAlpha = fvc::grad(alpha2s_);
-    volVectorField ns(gradAlpha/(mag(gradAlpha) + deltaN_));
-    //volVectorField ns (fvc::grad(alpha2s_)/mag(fvc::grad(alpha2s_) + deltaN_) );
+    //clip alpha1 to avoid sqrt(<0)
+    volScalarField alpha1c_ = Foam::max(1.0, Foam::min(alpha1_, 0.0));
 
     K_ = fvc::div(ns);
 
     volScalarField w = Foam::sqrt(alpha1_*(1.0 - alpha1_) + 1e-6);
+    //volScalarField factor = 2.0*Foam::sqrt(alpha1_*(1.0 - alpha1_)+1e-6) * pos(alpha1_-1e-6) * pos(0.9999999-alpha1_);
+    volScalarField factor = 2.0 * Foam::sqrt(alpha1c_*(1.0 - alpha1c_));
+    //volScalarField factor = 2.0 * w; // alternative to clipping alpha1 - use w
+
     volScalarField Ks_star_ = fvc::average(fvc::interpolate(K_*w))/fvc::average(fvc::interpolate(w));
-    volScalarField factor = 2.0*Foam::sqrt(alpha1_*(1.0 - alpha1_)+1e-6) * pos(alpha1_-1e-6) * pos(0.9999999-alpha1_);
     volScalarField Ks1_ = factor * K_ + (1.0 - factor) * Ks_star_;
+
     Ks_star_ = fvc::average(fvc::interpolate(Ks1_*w))/fvc::average(fvc::interpolate(w));
     volScalarField Ks2_ = factor * K_ + (1.0 - factor) * Ks_star_;
 
