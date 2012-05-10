@@ -123,7 +123,9 @@ void Foam::interfaceProperties::calculateK()
     //clip alpha1 to avoid sqrt(<0)
     volScalarField alpha1c_ = Foam::max(1.0, Foam::min(alpha1_, 0.0));
 
-    K_ = fvc::div(ns);
+    // eq. 14 in the reference paper does not have the minus sign,
+    // but that's inconsistent with interFoam's formulation
+    K_ = -fvc::div(ns);
 
     volScalarField w = Foam::sqrt(alpha1_*(1.0 - alpha1_) + 1e-6);
     //volScalarField factor = 2.0*Foam::sqrt(alpha1_*(1.0 - alpha1_)+1e-6) * pos(alpha1_-1e-6) * pos(0.9999999-alpha1_);
