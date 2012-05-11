@@ -109,7 +109,7 @@ void Foam::interfaceProperties::correctContactAngle
 
 void Foam::interfaceProperties::calculateK()
 {
-
+    // smooth alpha1 by successive interpolation to face and cell (eq 12)
     scalar CSK = 0.5;
     volScalarField alpha1s_ = 
         CSK * (fvc::average(fvc::interpolate(alpha1_))) + (1.0 - CSK) * alpha1_;
@@ -122,18 +122,26 @@ void Foam::interfaceProperties::calculateK()
     volVectorField ns(gradAlpha/(Foam::mag(gradAlpha) + deltaN_));
 
     //clip alpha1 to avoid sqrt(<0)
+    Info << "min / max: " << Foam::min(alpha1_) << " / " << Foam::max(alpha1_) << endl;
     volScalarField alpha1c_ = Foam::min(1.0, Foam::max(alpha1_, 0.0));
 
     // eq. 14 in the reference paper does not have the minus sign,
     // but that's inconsistent with interFoam's formulation
     K_ = -fvc::div(ns);
 
-    volScalarField w = Foam::sqrt(alpha1_*(1.0 - alpha1_) + 1e-6);
+    const dictionary& MULEScontrols = alpha1_.mesh().solverDict(alpha1_.name());
+    scalar maxUnboundedness
+    (
+        readScalar(MULEScontrols.lookup("maxUnboundedness"))
+    );
+
+    volScalarField w = Foam::sqrt(alpha1c_*(1.0 - alpha1c_) + maxUnboundedness);
     //volScalarField factor = 2.0*Foam::sqrt(alpha1_*(1.0 - alpha1_)+1e-6) 
     //  * pos(alpha1_-1e-6) * pos(0.9999999-alpha1_);
     volScalarField factor = 2.0 * Foam::sqrt(alpha1c_*(1.0 - alpha1c_));
     //volScalarField factor = 2.0 * w; // alternative to clipping alpha1 - use w
 
+    // obtain smoothed curvature, eq. 15 & 16
     volScalarField Ks_star_ = 
         fvc::average(fvc::interpolate(K_*w))/fvc::average(fvc::interpolate(w));
     volScalarField Ks1_ = factor * K_ + (1.0 - factor) * Ks_star_;
