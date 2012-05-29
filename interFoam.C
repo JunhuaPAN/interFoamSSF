@@ -87,18 +87,19 @@ int main(int argc, char *argv[])
         double timestep(runTime.deltaTValue());
         label tindex(runTime.timeIndex());
 
+        Foam::TimeState pts = runTime.subCycle(1);
 
         // --- Pressure-velocity PIMPLE corrector loop
         for (pimple.start(); pimple.loop() || cycle<3; pimple++)
         {
             surfaceScalarField rhoPhiSum(0.0*rhoPhi);
-			if (++cycle == 1) //should move this outside of the PIMPLE loop
+         	if (++cycle == 1) //should move this outside of the PIMPLE loop
             {
 		        //update interface location for t = t_n-1 + dt/2
                 Info << "Subcycle 1" << endl;
-
                 runTime.setDeltaT(timestep/2.0);
                 runTime.setTime(time - timestep/2.0, tindex);
+                Info<< "deltaT, t_n-1+dt/2: " << runTime.deltaT() << ", " << runTime.time().value() << endl;
 
                 #include "alphaEqn.H"
                 rhoPhiSum += (0.5 * rhoPhi);
@@ -110,6 +111,8 @@ int main(int argc, char *argv[])
                 runTime.setDeltaT(timestep/2.0);
                 runTime.setTime(time, tindex);
 
+                Info<< "deltaT, t_n: " << runTime.deltaT() << ", " << runTime.time().value() << endl;
+
                 #include "alphaEqn.H"
                 //need to accumulate rhoPhi
                 rhoPhi = 0.5 * rhoPhi + 0.5 * rhoPhiSum;
@@ -119,6 +122,11 @@ int main(int argc, char *argv[])
             //Qwestshin - do we have to restore timeIndex too?
             runTime.setTime(time, tindex);
             runTime.setDeltaT(timestep);
+
+            Info<< "deltaT, Time: " << runTime.deltaT() << ", " << runTime.time().value() << endl;
+            runTime.endSubCycle();
+            
+            Info<< "deltaT, Time (SSend): " << runTime.deltaT() << ", " << runTime.time().value() << endl;
 
             //update properties
             twoPhaseProperties.correct();
