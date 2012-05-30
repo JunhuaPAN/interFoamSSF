@@ -16,7 +16,6 @@
         (
             UEqn
          ==
-			//fc +
             fvc::reconstruct
             (
                 fvc::interpolate(rho)*(g & mesh.Sf())

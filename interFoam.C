@@ -133,7 +133,10 @@ int main(int argc, char *argv[])
                 fcf_old = fcf;
             }
             // Reconstruct for plotting
-            fc = fvc::average(fcf*mesh.Sf()/mesh.magSf());
+			if(runTime.outputTime())
+            {
+            	fc = fvc::average(fcf*mesh.Sf()/mesh.magSf());
+            }
             
             // Solve capillary pressure
             fvScalarMatrix pcEqn

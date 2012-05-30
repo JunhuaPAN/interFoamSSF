@@ -20,7 +20,6 @@
     phi = phiU +
     (
 	    fvc::interpolate(rho)*(g & mesh.Sf())
-      //+ (fvc::interpolate(fc) & mesh.Sf())
       + fcf * mesh.magSf()
       - fvc::snGrad(pc) * mesh.magSf()
     )*rAUf;
