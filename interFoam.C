@@ -81,52 +81,40 @@ int main(int argc, char *argv[])
 
         rho == alpha1*rho1 + (scalar(1) - alpha1)*rho2;
 
-        int cycle = 0;
-        // --- Outer corrector loop
-        scalar time = runTime.time().value();
-        double timestep(runTime.deltaTValue());
-        label tindex(runTime.timeIndex());
+        // set up subcycling
+        Foam::TimeState pts = runTime.subCycle(2);
+        Foam::TimeState ss_pts = ++runTime;
 
-        Foam::TimeState pts = runTime.subCycle(1);
+        if (pimple.nOuterCorr() < 2)
+        {
+            Info<< "ABORT: Outer correctors < 2" << endl;
+            return -1;
+        }
 
         // --- Pressure-velocity PIMPLE corrector loop
-        for (pimple.start(); pimple.loop() || cycle<3; pimple++)
+        for (pimple.start(); pimple.loop(); pimple++)
         {
+            runTime.TimeState::operator=(ss_pts);
             surfaceScalarField rhoPhiSum(0.0*rhoPhi);
-         	if (++cycle == 1) //should move this outside of the PIMPLE loop
+         	if (pimple.corr() == 0) //should move this outside of the PIMPLE loop
             {
-		        //update interface location for t = t_n-1 + dt/2
                 Info << "Subcycle 1" << endl;
-                runTime.setDeltaT(timestep/2.0);
-                runTime.setTime(time - timestep/2.0, tindex);
-                Info<< "deltaT, t_n-1+dt/2: " << runTime.deltaT() << ", " << runTime.time().value() << endl;
-
+		        //update interface location for t = t_n-1 + dt/2
                 #include "alphaEqn.H"
                 rhoPhiSum += (0.5 * rhoPhi);
+                //advance to next half time step
+                ss_pts = ++runTime;
                 continue;
             } else {
-                //update interface location for t_n
                 Info << "Subcycle 2" << endl;
-
-                runTime.setDeltaT(timestep/2.0);
-                runTime.setTime(time, tindex);
-
-                Info<< "deltaT, t_n: " << runTime.deltaT() << ", " << runTime.time().value() << endl;
-
+                //update interface location for t_n
                 #include "alphaEqn.H"
                 //need to accumulate rhoPhi
                 rhoPhi = 0.5 * rhoPhi + 0.5 * rhoPhiSum;
             }
-            //rhoPhi = fvc::interpolate(rho) * phi;
-            //reset timestep and time
-            //Qwestshin - do we have to restore timeIndex too?
-            runTime.setTime(time, tindex);
-            runTime.setDeltaT(timestep);
-
-            Info<< "deltaT, Time: " << runTime.deltaT() << ", " << runTime.time().value() << endl;
-            runTime.endSubCycle();
-            
-            Info<< "deltaT, Time (SSend): " << runTime.deltaT() << ", " << runTime.time().value() << endl;
+            //restore timestep and time for other fields
+            ss_pts = runTime;
+            runTime.TimeState::operator=(pts);
 
             //update properties
             twoPhaseProperties.correct();
@@ -141,6 +129,7 @@ int main(int argc, char *argv[])
                     alpha1.mesh().solutionDict().subDict("PIMPLE").lookup("Cpc")
                 )
             );
+            //sharpen interface function
             volScalarField alpha_pc = 1.0/(1.0-Cpc) * 
                 (min( max(alpha1,Cpc/2.0), (1.0-Cpc/2.0) ) - Cpc/2.0);
             surfaceScalarField deltasf = fvc::snGrad(alpha_pc);
@@ -152,7 +141,7 @@ int main(int argc, char *argv[])
             } else {
                 fcf_old = fcf;
             }
-
+            // reconstruct for plotting
             fc = fvc::average(fcf*mesh.Sf()/mesh.magSf());
             
             // solve capillary pressure
@@ -171,6 +160,8 @@ int main(int argc, char *argv[])
             }
 
         } // pimple loop
+
+        runTime.endSubCycle();
 
 		Info << "max(U): " << max(U) << endl;
         runTime.write();
