@@ -78,73 +78,64 @@ int main(int argc, char *argv[])
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
         twoPhaseProperties.correct();
-
         rho == alpha1*rho1 + (scalar(1) - alpha1)*rho2;
 
-        // set up subcycling
+        // Set up subcycling
         Foam::TimeState pts = runTime.subCycle(2);
-        Foam::TimeState ss_pts = ++runTime;
 
-        if (pimple.nOuterCorr() < 2)
-        {
-            Info<< "ABORT: Outer correctors < 2" << endl;
-            return -1;
-        }
+		// Update interface location for t = t_n-1 + dt/2
+        Info<< "Alpha subcycle 1" << endl;
+        ++runTime;
+        #include "alphaEqn.H"
+        surfaceScalarField rhoPhiSum = 0.5 * rhoPhi;
+        
+        // Advance to next half time step
+        Foam::TimeState ss_pts = ++runTime;
 
         // --- Pressure-velocity PIMPLE corrector loop
         for (pimple.start(); pimple.loop(); pimple++)
         {
+            // Restore subcycle time
             runTime.TimeState::operator=(ss_pts);
-            surfaceScalarField rhoPhiSum(0.0*rhoPhi);
-         	if (pimple.corr() == 0) //should move this outside of the PIMPLE loop
-            {
-                Info << "Subcycle 1" << endl;
-		        //update interface location for t = t_n-1 + dt/2
-                #include "alphaEqn.H"
-                rhoPhiSum += (0.5 * rhoPhi);
-                //advance to next half time step
-                ss_pts = ++runTime;
-                continue;
-            } else {
-                Info << "Subcycle 2" << endl;
-                //update interface location for t_n
-                #include "alphaEqn.H"
-                //need to accumulate rhoPhi
-                rhoPhi = 0.5 * rhoPhi + 0.5 * rhoPhiSum;
-            }
-            //restore timestep and time for other fields
-            ss_pts = runTime;
+
+            // Update interface location for t_n
+         	Info<< "Alpha subcycle 2" << endl;
+            #include "alphaEqn.H"
+            // Accumulate rhoPhi
+            rhoPhi = 0.5 * rhoPhi + 0.5 * rhoPhiSum;
+            
+            // Restore timestep and time for other fields
             runTime.TimeState::operator=(pts);
 
-            //update properties
+            // Update properties
             twoPhaseProperties.correct();
             rho == alpha1*rho1 + (scalar(1.0) - alpha1)*rho2;
-            //update curvature
+            // Update curvature
             interface.correct();
             
-            //surface force
-            //Cpc should be 0.5 for dynamic problems, > 0.9 for static problems
+            // Surface force
+            // Cpc should be 0.5 for dynamic problems, > 0.9 for static problems
             scalar Cpc (readScalar
                 (
                     alpha1.mesh().solutionDict().subDict("PIMPLE").lookup("Cpc")
                 )
             );
-            //sharpen interface function
+            // Sharpen interface function
             volScalarField alpha_pc = 1.0/(1.0-Cpc) * 
                 (min( max(alpha1,Cpc/2.0), (1.0-Cpc/2.0) ) - Cpc/2.0);
             surfaceScalarField deltasf = fvc::snGrad(alpha_pc);
 
             surfaceScalarField fcf = interface.sigma()*interface.Kf()*deltasf;
-            // relax capillary force
+            // Relax capillary force
             if (!pimple.finalIter()) {
                 fcf = 0.7 * fcf_old + 0.3 * fcf;
             } else {
                 fcf_old = fcf;
             }
-            // reconstruct for plotting
+            // Reconstruct for plotting
             fc = fvc::average(fcf*mesh.Sf()/mesh.magSf());
             
-            // solve capillary pressure
+            // Solve capillary pressure
             fvScalarMatrix pcEqn
             (
                 fvm::laplacian(pc) == fvc::div(fcf*mesh.magSf())
@@ -163,7 +154,7 @@ int main(int argc, char *argv[])
 
         runTime.endSubCycle();
 
-		Info << "max(U): " << max(U) << endl;
+		Info<< "max(U): " << max(U) << endl;
         runTime.write();
 
         Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"

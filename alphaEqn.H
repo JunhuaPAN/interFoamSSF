@@ -26,6 +26,7 @@
             )
         );
 
+        // MULES::explicit can increase unboundedness
         MULES::implicitSolve(alpha1, phi, phiAlpha, 1, 0);
 
         rhoPhi = phiAlpha*(rho1 - rho2) + phi*rho2;
