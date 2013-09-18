@@ -9,4 +9,4 @@ twoPhaseInterfaceProperties/alphaFixedPressure/alphaFixedPressureFvPatchScalarFi
 
 interFoam.C
 
-EXE = $(FOAM_USER_APPBIN)/interFoamSSF
+EXE = $(FOAM_USER_APPBIN)/gcssf
