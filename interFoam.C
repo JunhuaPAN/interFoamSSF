@@ -41,7 +41,8 @@ Description
 #include "MULES.H"
 #include "subCycle.H"
 #include "interfaceProperties/interfaceProperties.H"
-#include "twoPhaseMixture.H"
+//#include "twoPhaseMixture.H"
+#include "incompressibleTwoPhaseMixture.H"
 #include "interpolationTable.H"
 #include "pimpleControl.H"
 
@@ -93,7 +94,8 @@ int main(int argc, char *argv[])
         Foam::TimeState ss_pts = ++runTime;
 
         // --- Pressure-velocity PIMPLE corrector loop
-        for (pimple.start(); pimple.loop(); pimple++)
+        //for (pimple.start(); pimple.loop(); pimple++)
+	while (pimple.loop())
         {
             // Restore subcycle time
             runTime.TimeState::operator=(ss_pts);
@@ -148,7 +150,8 @@ int main(int argc, char *argv[])
 
             #include "UEqn.H"
             // --- PISO loop
-            for (int corr=0; corr<pimple.nCorr(); corr++)
+            //for (int corr=0; corr<pimple.nCorr(); corr++)
+	    while (pimple.correct())	
             {
                 #include "pEqn.H"
             }

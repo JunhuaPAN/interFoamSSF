@@ -22,6 +22,8 @@
 	    fvc::interpolate(rho)*(g & mesh.Sf())
       + fcf * mesh.magSf()
       - fvc::snGrad(pc) * mesh.magSf()
+      // Momemtum source term
+      - fSourceMomf
     )*rAUf;
 
     //relax
@@ -31,7 +33,8 @@
 	    phi_old = phi;
     }*/
 
-    for (int nonOrth=0; nonOrth<=pimple.nNonOrthCorr(); nonOrth++)
+    //for (int nonOrth=0; nonOrth<=pimple.nNonOrthCorr(); nonOrth++)
+    while (pimple.correctNonOrthogonal())	
     {
         fvScalarMatrix pEqn
         (
@@ -42,10 +45,12 @@
 
         pEqn.solve
         (
-            mesh.solver(p.select(pimple.finalInnerIter(corr, nonOrth)))
+            //mesh.solver(p.select(pimple.finalInnerIter(corr, nonOrth)))
+	    mesh.solver(p.select(pimple.finalInnerIter()))
         );
 
-        if (nonOrth == pimple.nNonOrthCorr())
+        //if (nonOrth == pimple.nNonOrthCorr())
+	if (pimple.finalNonOrthogonalIter())
         {
             phi -= pEqn.flux();
         }

@@ -1,0 +1,9 @@
+LOCAL_OBJECTS = \
+interfaceProperties.o\
+interfaceCompression.o\
+alphaContactAngleFvPatchScalarField.o\
+constantAlphaContactAngleFvPatchScalarField.o\
+dynamicAlphaContactAngleFvPatchScalarField.o\
+timeVaryingAlphaContactAngleFvPatchScalarField.o\
+alphaFixedPressureFvPatchScalarField.o\
+interFoam.o

@@ -60,8 +60,14 @@
 #   include "createPhi.H"
 
 
-	Info<< "Reading transportProperties\n" << endl;
-    twoPhaseMixture twoPhaseProperties(U, phi);
+//	Info<< "Reading transportProperties\n" << endl;
+//   twoPhaseMixture twoPhaseProperties(U, phi);
+//
+//    const dimensionedScalar& rho1 = twoPhaseProperties.rho1();
+//    const dimensionedScalar& rho2 = twoPhaseProperties.rho2();
+
+    Info<< "Reading transportProperties\n" << endl;
+    incompressibleTwoPhaseMixture twoPhaseProperties(U, phi);
 
     const dimensionedScalar& rho1 = twoPhaseProperties.rho1();
     const dimensionedScalar& rho2 = twoPhaseProperties.rho2();
@@ -152,6 +158,8 @@
         dimensionedVector("fc0", dimMass/(dimLength*dimLength*dimTime*dimTime), vector(0,0,0))
     );
 
+    // Create momemtum source file
+    #include "createMomentumSource.H"	
 
     /*if (p_rgh.needReference())
     {

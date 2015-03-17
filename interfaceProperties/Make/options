@@ -1,5 +1,7 @@
 EXE_INC = \
-    -I$(LIB_SRC)/transportModels/twoPhaseInterfaceProperties/alphaContactAngle/alphaContactAngle \
+    -I../twoPhaseInterfaceProperties/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude
 
-LIB_LIBS = -lfiniteVolume
+LIB_LIBS = \
+    -lfiniteVolume \
+    -L$(FOAM_USER_LIBBIN)/ltwoPhaseInterfaceProperties

@@ -24,6 +24,8 @@
                   - fvc::snGrad(p)
 				  - fvc::snGrad(pc)
                 ) * mesh.magSf()
+	      // Momemtum source term
+              - fSourceMomf	
             )
         );
     }
