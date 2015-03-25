@@ -1,4 +1,4 @@
 interfaceProperties.C
 interfaceCompression/interfaceCompression.C
 
-LIB = $(FOAM_USER_LIBBIN)/libinterfaceProperties
+LIB = $(FOAM_USER_LIBBIN)/libtwoPhaseInterfaceProperties

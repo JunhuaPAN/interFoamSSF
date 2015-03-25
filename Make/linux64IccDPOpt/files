@@ -1,0 +1,16 @@
+# 1 "files"
+# 1 "<built-in>"
+# 1 "<command-line>"
+# 1 "files"
+interfaceProperties/interfaceProperties.C
+interfaceProperties/interfaceCompression/interfaceCompression.C
+
+twoPhaseInterfaceProperties/alphaContactAngle/alphaContactAngle/alphaContactAngleFvPatchScalarField.C
+twoPhaseInterfaceProperties/alphaContactAngle/constantAlphaContactAngle/constantAlphaContactAngleFvPatchScalarField.C
+twoPhaseInterfaceProperties/alphaContactAngle/dynamicAlphaContactAngle/dynamicAlphaContactAngleFvPatchScalarField.C
+twoPhaseInterfaceProperties/alphaContactAngle/timeVaryingAlphaContactAngle/timeVaryingAlphaContactAngleFvPatchScalarField.C
+twoPhaseInterfaceProperties/alphaFixedPressure/alphaFixedPressureFvPatchScalarField.C
+
+interFoam.C
+
+EXE = $(FOAM_USER_APPBIN)/interFoamSSF

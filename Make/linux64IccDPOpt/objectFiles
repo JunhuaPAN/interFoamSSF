@@ -1,0 +1,9 @@
+OBJECTS = \
+$(OBJECTS_DIR)/interfaceProperties.o\
+$(OBJECTS_DIR)/interfaceCompression.o\
+$(OBJECTS_DIR)/alphaContactAngleFvPatchScalarField.o\
+$(OBJECTS_DIR)/constantAlphaContactAngleFvPatchScalarField.o\
+$(OBJECTS_DIR)/dynamicAlphaContactAngleFvPatchScalarField.o\
+$(OBJECTS_DIR)/timeVaryingAlphaContactAngleFvPatchScalarField.o\
+$(OBJECTS_DIR)/alphaFixedPressureFvPatchScalarField.o\
+$(OBJECTS_DIR)/interFoam.o
